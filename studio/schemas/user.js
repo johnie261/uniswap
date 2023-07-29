@@ -9,7 +9,7 @@ export default {
       type: 'string',
     },
     {
-      name: 'userName ',
+      name: 'userName',
       title: 'User Name',
       type: 'string',
     },
@@ -20,9 +20,9 @@ export default {
       of: [
         {
           type: 'reference',
-          to: [{ type: 'transactions' }]
-        }
-      ]
-    }
-  ]
+          to: [{ type: 'transactions' }],
+        },
+      ],
+    },
+  ],
 }
