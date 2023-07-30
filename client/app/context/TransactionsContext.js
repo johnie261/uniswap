@@ -183,7 +183,8 @@ export const TransactionProvider = ({children}) => {
         connectWallet,
         sendTransaction,
         handleChange,
-        formData
+        formData,
+        isLoading
       }}
     >
         {children}
