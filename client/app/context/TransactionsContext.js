@@ -2,6 +2,7 @@
 
 import React, {useState, useEffect} from "react";
 import { contractABI, contractAddress } from "@/lib/constants";
+import { client } from "@/lib/sanityClient";
 const { ethers } = require("ethers");
 
 export const TransactionContext = React.createContext()
@@ -37,6 +38,20 @@ export const TransactionProvider = ({children}) => {
   useEffect(()=> {
     checkIfWalletIsConnected()
   }, [])
+
+  useEffect(()=> {
+    if(!currentAccount) return
+    ;(async() => {
+      const userDoc = {
+        _type: 'users',
+        _id: currentAccount,
+        userName: 'Unnamed',
+        address: currentAccount
+      }
+
+      await client.createIfNotExists(userDoc)
+    })()
+  }, [currentAccount])
 
   const connectWallet = async(metamask = eth) => {
     try {
@@ -106,12 +121,12 @@ export const TransactionProvider = ({children}) => {
 
       await transactionHash.wait()
 
-      // await saveTransaction(
-      //   transactionHash,
-      //   amount,
-      //   connectedAccount,
-      //   addressTo
-      // )
+      await saveTransaction(
+        transactionHash,
+        amount,
+        connectedAccount,
+        addressTo
+      )
 
       setIsLoading(false)
     } catch (error) {
@@ -121,6 +136,44 @@ export const TransactionProvider = ({children}) => {
 
   const handleChange = (e, name) => {
     setFormData((prevState) => ({...prevState, [name]: e.target.value}))
+  }
+
+  const saveTransaction = async (
+    txHash,
+    amount,
+    fromAddress = currentAccount,
+    toAddress
+  ) => {
+
+    console.log(txHash)
+
+    console.log(txHash.hash)
+
+    const txDoc = {
+      _type: 'transactions',
+      _id: txHash.hash,
+      fromAddress: fromAddress,
+      toAddress: toAddress,
+      timestamp: new Date(Date.now()).toISOString(),
+      txHash: txHash.hash,
+      amount: parseFloat(amount)
+    }
+
+    await client.createIfNotExists(txDoc)
+
+    await client
+      .patch(currentAccount)
+      .setIfMissing({ transactions: [] })
+      .insert('after', 'transactions[-1]', [
+        {
+          _key: txHash.hash,
+          _ref: txHash.hash,
+          _type: 'reference',
+        },
+      ])
+      .commit()
+
+    return
   }
 
   return (
